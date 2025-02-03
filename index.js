@@ -43,7 +43,7 @@ const fetchBookData = async ({ title, author }) => {
 
         const bookInfo = {
             title: bookData.title,
-            author: bookData.author_name ? bookData.author_name[0] : 'Unknown Author',
+            author: Array.isArray(bookData.author_name) ? bookData.author_name[0] : 'Unknown Author',
             publicationYear: bookData.first_publish_year || 'Unknown Year',
             description: 'Description not available',
             coverImage: bookData.cover_i 
@@ -72,8 +72,9 @@ const fetchBookData = async ({ title, author }) => {
 
 app.get("/", async (req, res) => {
     try {
-        const bookResults = await Promise.all(books.map(title => fetchBookData(title)));
-        res.json(bookResults);
+        const bookResults = await Promise.all(books.map(book => fetchBookData(book)));
+        res.render("index.ejs", { books: bookResults});
+        //res.json(bookResults);
     } catch (error) {
         console.error("Error fetching books:", error.message);
         res.status(500).json({ error: "Internal server error" });
