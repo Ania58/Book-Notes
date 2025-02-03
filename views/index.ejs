@@ -10,10 +10,16 @@
     <% books.forEach((book) => { %>
         <h2><%= book.title %></h2>
         <h3><%= book.author %></h3>
-        <p><%= book.publicationYear %></p>
-        <p><%= book.description %></p>
-        <% if (book.coverImage !== "Cover image not available") { %>
-            <img src="<%= book.coverImage %>" alt="Book Cover" />
+        <p><%= book.publicationYear || book.publication_year %></p>
+        <% if (!book.description || book.description.includes("Description not available")) { %>
+            <p><i>No official description found. Check <a href="https://openlibrary.org/search?q=<%= book.encodedTitle || encodeURIComponent(book.title) %>" target="_blank">Open Library</a> for more details.</i></p>
+        <% } else { %>
+            <p><%= book.description.replace(/<\/?[^>]+(>|$)/g, "") %></p>
+        <% } %>
+        <% if (book.coverImage && book.coverImage !== "Cover image not available") { %>
+            <img src="<%= book.coverImage %>" alt="Book Cover" onerror="this.style.display='none'"/>
+        <% } else if (book.cover_image && book.cover_image !== "Cover image not available") { %>
+            <img src="<%= book.cover_image %>" alt="Book Cover" onerror="this.style.display='none'"/>
         <% } else { %>
             <p>No cover available</p>
         <% } %>
