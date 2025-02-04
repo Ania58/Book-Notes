@@ -111,7 +111,26 @@ app.get("/", async (req, res) => {
     }
 })
 
+app.get("/add", (req, res) => {
+    res.render("addBook.ejs", { message: null }); 
+});
 
+app.post("/add", async (req, res) => {
+    const { title, author, publication_year, description, cover_image } = req.body;
+    if (!title || !author) {
+        return res.status(400).json({ error: "Title and author are required" });
+    }
+    try {
+        const result = await db.query(`INSERT INTO books 
+            (title, author, publication_year, description, cover_image) 
+            VALUES ($1, $2, $3, $4, $5) RETURNING*`, 
+            [title, author, publication_year, description || "Description not available", cover_image || "Cover image not available"]); 
+        res.render("addBook.ejs", { message: `✅ Book "${title}" added successfully!` });
+    } catch (error) {
+        console.error("Error adding book:", error);
+        res.status(500).json({ error: "Database error" });
+    }
+})
 
 
 
