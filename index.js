@@ -101,9 +101,19 @@ const fetchBookData = async ({ title, author }) => {
 
 app.get("/", async (req, res) => {
     try {
-        const bookResults = await Promise.all(books.map(book => fetchBookData(book)));
+        /*const bookResults = await Promise.all(books.map(book => fetchBookData(book)));
         res.render("index.ejs", { books: bookResults});
-        console.log(bookResults);
+        console.log(bookResults);*/
+        const dbBooks = await db.query("SELECT * FROM books ORDER BY id ASC");
+
+        const existingTitles = dbBooks.rows.map(book => book.title);
+        const missingBooks = books.filter(book => !existingTitles.includes(book.title));
+
+        const newBooks = await Promise.all(missingBooks.map(fetchBookData));
+
+        const updatedBooks = await db.query("SELECT * FROM books ORDER BY id ASC");
+
+        res.render("index.ejs", { books: updatedBooks.rows });
         //res.json(bookResults);
     } catch (error) {
         console.error("Error fetching books:", error.message);
