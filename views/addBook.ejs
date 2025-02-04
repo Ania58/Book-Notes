@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add a book</title>
+</head>
+<body>
+    <h1>Add a book of your choice</h1>
+   <form method="POST" action="/add">
+        <label for="title">Write a title</label>
+        <input id="title" name="title" value="" type="text" />
+        <label for="author">Write an author</label>
+        <input id="author" name="author" value="" type="text" />
+        <label for="year">Write a publication year</label>
+        <input id="year" name="publicationYear" value="" type="text" />
+        <label for="description">Write a description</label>
+        <input id="description" name="description" value="" type="text" />
+        <label for="cover">Place a link to a cover</label>
+        <input id="cover" name="coverImage" value="" type="text" />
+        <button type="submit">Add your book</button>
+   </form> 
+</body>
+</html>
