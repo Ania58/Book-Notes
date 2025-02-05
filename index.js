@@ -32,71 +32,86 @@ const books = [
     { title: "The Alchemist", author: "Paulo Coelho" },
     { title: "Lord of the Rings", author: "J.R.R. Tolkien" }
 ];
+
 const fetchBookData = async ({ title, author }) => {
     try {
-        const existingBook = await db.query("SELECT * FROM books WHERE title = $1 AND author = $2", [title, author]);
+        const cleanTitle = title.trim().toLowerCase();
+        const cleanAuthor = author.trim().toLowerCase();
 
-        console.log(`Retrieved from DB:`, existingBook.rows[0]); 
+        const existingBook = await db.query(
+            "SELECT * FROM books WHERE LOWER(title) = $1 AND LOWER(author) = $2",
+            [cleanTitle, cleanAuthor]
+        );
 
         if (existingBook.rows.length > 0) {
-            console.log(`Book found in database: ${title}`);
-            return existingBook.rows[0]; 
+            console.log(`✅ Book already exists in DB: ${title}`);
+            return existingBook.rows[0];
         }
 
-        const searchResponse = await axios.get(`https://openlibrary.org/search.json?title=${encodeURIComponent(title)}&author=${encodeURIComponent(author)}`);
-        console.log(searchResponse.data.docs);
+        const searchResponse = await axios.get(
+            `https://openlibrary.org/search.json?title=${encodeURIComponent(title)}&author=${encodeURIComponent(author)}`
+        );
 
-        if (!searchResponse.data.docs || searchResponse.data.docs.length === 0) {
+        const books = searchResponse.data.docs;
+        if (!books || books.length === 0) {
             return { title, author, error: "Not found" };
-       };
-        
-        const bookData = searchResponse.data.docs.find(book => book.author_name && book.author_name.includes(author));
+        }
 
-        if (!bookData) return { title, author, error: "Not found" };
-       
+        const bestBook = books.find(book =>
+            book.title.toLowerCase() === cleanTitle &&
+            book.author_name &&
+            book.author_name.some(a => a.toLowerCase() === cleanAuthor) &&
+            !book.title.toLowerCase().includes("annotated") &&
+            !book.title.toLowerCase().includes("study guide") &&
+            !book.title.toLowerCase().includes("sparknotes") &&
+            !book.title.toLowerCase().includes("summary")
+        );
+
+        if (!bestBook) {
+            return { title, author, error: "No suitable edition found" };
+        }
+
         const bookInfo = {
-            title: bookData.title,
-            author: Array.isArray(bookData.author_name) ? bookData.author_name[0] : 'Unknown Author',
-            publicationYear: bookData.first_publish_year || null,
-            description: 'Description not available',
-            coverImage: bookData.cover_i 
-                ? `https://covers.openlibrary.org/b/id/${bookData.cover_i}-L.jpg` 
-                : "Cover image not available",
-            encodedTitle: encodeURIComponent(bookData.title)
+            title: bestBook.title,
+            author: Array.isArray(bestBook.author_name) ? bestBook.author_name[0] : "Unknown Author",
+            publicationYear: bestBook.first_publish_year || null,
+            description: "Description not available",
+            coverImage: bestBook.cover_i
+                ? `https://covers.openlibrary.org/b/id/${bestBook.cover_i}-L.jpg`
+                : "Cover image not available"
         };
 
-        if (bookData.key) {
-            const workResponse = await axios.get(`https://openlibrary.org${bookData.key}.json`);
-            //console.log(workResponse);
-            
-            if (workResponse.data.description) {
-                bookInfo.description = typeof workResponse.data.description === 'string' 
-                    ? workResponse.data.description 
-                    : workResponse.data.description.value;
+        if (bestBook.key) {
+            try {
+                const workResponse = await axios.get(`https://openlibrary.org${bestBook.key}.json`);
+                if (workResponse.data.description) {
+                    bookInfo.description = typeof workResponse.data.description === "string"
+                        ? workResponse.data.description
+                        : workResponse.data.description.value;
+                }
+            } catch (descError) {
+                console.log("⚠️ Could not fetch description for:", title);
             }
         }
-
         try {
             await db.query(
                 `INSERT INTO books (title, author, publication_year, description, cover_image) 
                  VALUES ($1, $2, $3, $4, $5) 
-                 ON CONFLICT (title, author) DO UPDATE 
-                 SET cover_image = COALESCE(books.cover_image, EXCLUDED.cover_image)`,
+                 ON CONFLICT (title, author) DO NOTHING`,
                 [bookInfo.title, bookInfo.author, bookInfo.publicationYear, bookInfo.description, bookInfo.coverImage]
             );
-            console.log(`Book saved to database: ${title}`);
+            console.log(`📚 Book saved to database: ${title}`);
         } catch (dbError) {
-            console.error(`Error inserting book into database: ${title}`, dbError.message);
+            console.error(`❌ Error inserting book into database: ${title}`, dbError.message);
         }
-
-        console.log(`Book saved to database: ${title}`);
 
         return bookInfo;
     } catch (error) {
-        console.error(`Error fetching data for "${title}":`, error.message);
+        console.error(`❌ Error fetching data for "${title}":`, error.message);
         return { title, author, error: "API request failed" };
     }
 };
+
 
 
 app.get("/", async (req, res) => {
