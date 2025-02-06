@@ -42,10 +42,14 @@ const fetchBookData = async ({ title, author }) => {
             "SELECT * FROM books WHERE LOWER(title) = $1 AND LOWER(author) = $2",
             [cleanTitle, cleanAuthor]
         );
+        
+        let existingBookData = null;
 
         if (existingBook.rows.length > 0) {
             console.log(`✅ Book already exists in DB: ${title}`);
-            return existingBook.rows[0];
+            //return existingBook.rows[0];
+            existingBookData = existingBook.rows[0];
+            
         }
 
         const searchResponse = await axios.get(
@@ -70,6 +74,8 @@ const fetchBookData = async ({ title, author }) => {
         if (!bestBook) {
             return { title, author, error: "No suitable edition found" };
         }
+        console.log(`✅ Checking bestBook for ${title}:`, bestBook ? "FOUND" : "NOT FOUND");
+
 
         const bookInfo = {
             title: bestBook.title,
@@ -80,15 +86,22 @@ const fetchBookData = async ({ title, author }) => {
                 ? `https://covers.openlibrary.org/b/id/${bestBook.cover_i}-L.jpg`
                 : "Cover image not available"
         };
+        console.log(`📖 Best book object for ${title}:`, bestBook);
 
-        if (bestBook.key) {
+
+        if (bestBook.key || bestBook.edition_key) {
             try {
+                const workKey = bestBook.key || `/works/${bestBook.edition_key[0]}`;
                 const workResponse = await axios.get(`https://openlibrary.org${bestBook.key}.json`);
+                console.log(`API Raw Description Response for ${title}:`, workResponse.data.description);
                 if (workResponse.data.description) {
-                    bookInfo.description = typeof workResponse.data.description === "string"
-                        ? workResponse.data.description
-                        : workResponse.data.description.value;
+                        bookInfo.description = cleanDescription(
+                            typeof workResponse.data.description === "string"
+                                ? workResponse.data.description
+                                : workResponse.data.description.value
+                        );
                 }
+                console.log(`Cleaned Description for ${title}:`, bookInfo.description);
             } catch (descError) {
                 console.log("⚠️ Could not fetch description for:", title);
             }
@@ -97,7 +110,9 @@ const fetchBookData = async ({ title, author }) => {
             await db.query(
                 `INSERT INTO books (title, author, publication_year, description, cover_image) 
                  VALUES ($1, $2, $3, $4, $5) 
-                 ON CONFLICT (title, author) DO NOTHING`,
+                 ON CONFLICT (title, author) DO UPDATE 
+                 SET description = COALESCE(NULLIF(EXCLUDED.description, 'Description not available'), books.description),
+                 cover_image = COALESCE(books.cover_image, EXCLUDED.cover_image)`,
                 [bookInfo.title, bookInfo.author, bookInfo.publicationYear, bookInfo.description, bookInfo.coverImage]
             );
             console.log(`📚 Book saved to database: ${title}`);
@@ -110,6 +125,28 @@ const fetchBookData = async ({ title, author }) => {
         console.error(`❌ Error fetching data for "${title}":`, error.message);
         return { title, author, error: "API request failed" };
     }
+};
+
+const cleanDescription = (description) => {
+    if (!description) return "Description not available";
+
+    if (typeof description !== "string") {
+        description = description.value || "Description not available";
+    }
+
+    description = description.replace(/\[.*?\]\(https?:\/\/openlibrary\.org\/.*?\)/g, ''); 
+    description = description.replace(/https?:\/\/openlibrary\.org\/.*?\s?/g, ''); 
+    description = description.replace(/[-]{2,}/g, ''); 
+    description = description.replace(/\s{2,}/g, ' ').trim(); 
+    description = description.replace(/\*.*?\*/g, ''); 
+
+    description = description.split('Also contained in:')[0].trim();
+    description = description.split('Contains:')[0].trim();
+
+    let sentences = description.split(/(?<=\.)\s+/);
+    let cleanedSentence = sentences.slice(0, 5).join(" ");
+
+    return cleanedSentence || "Description not available";
 };
 
 
