@@ -243,6 +243,43 @@ app.post("/add", async (req, res) => {
     }
 })
 
+app.get("/edit/:id", async (req, res) => {
+    const { id } = req.params;
+    try {
+        const result = await db.query("SELECT * FROM books WHERE id = $1", [id]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).send("Book not found");
+        }
+
+        res.render("editBook.ejs", { book: result.rows[0] });
+
+    } catch (error) {
+        console.error("Error fetching book:", error);
+        res.status(500).send("Internal Server Error");
+    }
+});
+
+app.post("/edit/:id", async (req,res) => {
+    const { title, author, publication_year, description, cover_image } = req.body;
+    const { id } = req.params;
+    try {
+        const result = await db.query(`UPDATE books
+            SET title = $1, author = $2, publication_year = $3, description = $4, cover_image = $5
+            WHERE id = $6 RETURNING *`,
+            [title,author,publication_year,description,cover_image,id]);
+            
+            if (result.rows.length === 0) {
+                return res.status(404).json({ error: "Book not found" });
+            }
+    
+            res.redirect("/");
+    } catch (error) {
+        console.error("Error adding book:", error);
+        res.status(500).json({ error: "Database error" });
+    }
+})
+
 
 
 
