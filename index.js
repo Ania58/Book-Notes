@@ -33,7 +33,32 @@ const books = [
     { title: "Lord of the Rings", author: "J.R.R. Tolkien" }
 ];
 
+const customBookData = {
+    "The Baltimore Boys": {
+        description: "The Baltimore Boys. The Goldman Gang. That was what they called Marcus Goldman and his cousins Woody and Hillel—three brilliant young men with dazzling futures before their kingdom crumbled beneath the weight of lies, jealousy, and betrayal.",
+        coverImage: "https://example.com/baltimore-boys-cover.jpg"
+    },
+    "Truth About the Harry Quebert Affair": {
+        description: "August 30, 1975: the day fifteen-year-old Nola Kellergan was glimpsed fleeing through the woods, never to be heard from again. Thirty-three years later, Marcus Goldman, a successful young novelist, visits Somerset to see his mentor Quebert, one of the country's most respected writers.",
+        coverImage: "https://m.media-amazon.com/images/I/71cjtDPGf6L._AC_UF1000,1000_QL80_.jpg"
+    },
+    "The Witcher": {
+        description: "The Witcher is a series of fantasy novels by Andrzej Sapkowski, following Geralt of Rivia, a monster hunter with supernatural abilities. Witchers are trained to battle dangerous creatures across the world.",
+        coverImage: "https://example.com/witcher-cover.jpg"
+    },
+    "A Day with The Little Prince": {
+        description: "No story is more beloved by children and grown-ups alike than this wise, enchanting fable. This classic tale is beautifully reimagined with simple text, original illustrations, and a captivating design.",
+        coverImage: "https://example.com/little-prince-day-cover.jpg"
+    },
+    "The Little Prince": {
+        description: "The Little Prince is a novella written and illustrated by Antoine de Saint-Exupéry. The story follows a young prince who visits various planets, including Earth, and explores themes of loneliness, friendship, love, and loss.",
+        coverImage: "https://upload.wikimedia.org/wikipedia/en/0/05/Littleprince.JPG"
+    }
+};
+
 const fetchBookData = async ({ title, author }) => {
+    console.log(`🚀 Processing book: ${title} by ${author}`);
+
     try {
         const cleanTitle = title.trim().toLowerCase();
         const cleanAuthor = author.trim().toLowerCase();
@@ -56,6 +81,7 @@ const fetchBookData = async ({ title, author }) => {
             `https://openlibrary.org/search.json?title=${encodeURIComponent(title)}&author=${encodeURIComponent(author)}`
         );
 
+        console.log(`🔍 API Search Response for "${title}":`, searchResponse.data.docs);
         const books = searchResponse.data.docs;
         if (!books || books.length === 0) {
             return { title, author, error: "Not found" };
@@ -106,13 +132,32 @@ const fetchBookData = async ({ title, author }) => {
                 console.log("⚠️ Could not fetch description for:", title);
             }
         }
+        const matchedKey = Object.keys(customBookData).find(
+            key => bookInfo.title.toLowerCase().includes(key.toLowerCase())
+        );
+
+        
+        if (matchedKey) {
+        
+            if (!bookInfo.description || bookInfo.description === "Description not available") {
+                bookInfo.description = customBookData[matchedKey].description;
+            }
+            if (!bookInfo.coverImage || bookInfo.coverImage === "Cover image not available") {
+                bookInfo.coverImage = customBookData[matchedKey].coverImage;
+            }
+        }
+        
         try {
             await db.query(
                 `INSERT INTO books (title, author, publication_year, description, cover_image) 
                  VALUES ($1, $2, $3, $4, $5) 
                  ON CONFLICT (title, author) DO UPDATE 
-                 SET description = COALESCE(NULLIF(EXCLUDED.description, 'Description not available'), books.description),
-                 cover_image = COALESCE(books.cover_image, EXCLUDED.cover_image)`,
+                 SET description = CASE 
+                     WHEN books.description = 'Description not available' OR books.description IS NULL THEN EXCLUDED.description 
+                     ELSE books.description END,
+                 cover_image = CASE 
+                     WHEN books.cover_image = 'Cover image not available' OR books.cover_image IS NULL THEN EXCLUDED.cover_image 
+                     ELSE books.cover_image END`,
                 [bookInfo.title, bookInfo.author, bookInfo.publicationYear, bookInfo.description, bookInfo.coverImage]
             );
             console.log(`📚 Book saved to database: ${title}`);
@@ -153,16 +198,20 @@ const cleanDescription = (description) => {
 
 app.get("/", async (req, res) => {
     try {
-        /*const bookResults = await Promise.all(books.map(book => fetchBookData(book)));
-        res.render("index.ejs", { books: bookResults});
-        console.log(bookResults);*/
         const dbBooks = await db.query("SELECT * FROM books ORDER BY id ASC");
 
         const existingTitles = dbBooks.rows.map(book => book.title);
         const missingBooks = books.filter(book => !existingTitles.includes(book.title));
 
-        const newBooks = await Promise.all(missingBooks.map(fetchBookData));
+        const newBooks = [];
 
+        for (const book of books) {
+            const fetchedBook = await fetchBookData(book);
+            
+            if (fetchedBook) {
+                newBooks.push(fetchedBook);
+            }
+        }
         const updatedBooks = await db.query("SELECT * FROM books ORDER BY id ASC");
 
         res.render("index.ejs", { books: updatedBooks.rows });
