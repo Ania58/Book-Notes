@@ -3,26 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/index.css">
     <title>Book Notes</title>
 </head>
 <body>
+    <nav>
+        <a href="/add" class="nav-link">➕ Add a Book</a>
+    </nav>
     <h1>Here are some of the books worth reading</h1>
-    <% books.forEach((book) => { %>
-        <h2><%= book.title %></h2>
-        <h3><%= book.author %></h3>
-        <p><%= book.publicationYear || book.publication_year %></p>
-        <% if (!book.description || book.description.includes("Description not available")) { %>
-            <p><i>No official description found. Check <a href="https://openlibrary.org/search?q=<%= book.encodedTitle || encodeURIComponent(book.title) %>" target="_blank">Open Library</a> for more details.</i></p>
-        <% } else { %>
-            <p><%= book.description.replace(/<\/?[^>]+(>|$)/g, "") %></p>
-        <% } %>
-        <% if (book.coverImage && book.coverImage !== "Cover image not available") { %>
-            <img src="<%= book.coverImage %>" alt="Book Cover" onerror="this.style.display='none'"/>
-        <% } else if (book.cover_image && book.cover_image !== "Cover image not available") { %>
-            <img src="<%= book.cover_image %>" alt="Book Cover" onerror="this.style.display='none'"/>
-        <% } else { %>
-            <p>No cover available</p>
-        <% } %>
-    <% }) %>
+    <div class="book-container">
+        <% books.forEach((book) => { %>
+            <div class="book-card">
+                <h2><%= book.title %></h2>
+                <h3><%= book.author %></h3>
+                <p><%= book.publicationYear || book.publication_year %></p>
+
+                <% if (!book.description || book.description.includes("Description not available")) { %>
+                    <p class="no-cover">
+                        <i>No official description found. Check 
+                            <a href="https://openlibrary.org/search?q=<%= book.encodedTitle || encodeURIComponent(book.title) %>" 
+                               target="_blank">
+                               Open Library
+                            </a> for more details.
+                        </i>
+                    </p>
+                <% } else { %>
+                    <p><%= book.description.replace(/<\/?[^>]+(>|$)/g, "") %></p>
+                <% } %>
+
+                <% if (book.coverImage && book.coverImage !== "Cover image not available") { %>
+                    <img src="<%= book.coverImage %>" alt="Book Cover" class="book-cover" onerror="this.style.display='none'"/>
+                <% } else if (book.cover_image && book.cover_image !== "Cover image not available") { %>
+                    <img src="<%= book.cover_image %>" alt="Book Cover" class="book-cover" onerror="this.style.display='none'"/>
+                <% } else { %>
+                    <p class="no-cover">No cover available</p>
+                <% } %>
+            </div>
+        <% }) %>
+    </div>
 </body>
 </html>

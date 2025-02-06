@@ -3,25 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/addBook.css">
     <title>Add a book</title>
 </head>
 <body>
+    <nav>
+        <a href="/" class="nav-link">🏠 Back to Home</a>
+    </nav>
     <h1>Add a book of your choice</h1>
     <% if (message) { %>
-        <p style="color: green;"><%= message %></p>
+        <p class="message"><%= message %></p>
     <% } %>
-   <form method="POST" action="/add">
+
+    <form method="POST" action="/add" class="book-form">
         <label for="title">Write a title</label>
-        <input id="title" name="title" value="" type="text" />
+        <input id="title" name="title" type="text" class="input-field" />
+
         <label for="author">Write an author</label>
-        <input id="author" name="author" value="" type="text" />
+        <input id="author" name="author" type="text" class="input-field" />
+
         <label for="year">Write a publication year</label>
-        <input id="year" name="publication_year" value="" type="text" />
+        <input id="year" name="publication_year" type="text" class="input-field" />
+
         <label for="description">Write a description</label>
-        <input id="description" name="description" value="" type="text" />
+        <textarea id="description" name="description" class="input-field"></textarea>
+
         <label for="cover">Place a link to a cover</label>
-        <input id="cover" name="cover_image" value="" type="text" />
-        <button type="submit">Add your book</button>
-   </form> 
+        <input id="cover" name="cover_image" type="text" class="input-field" />
+
+        <button type="submit" class="submit-button">Add your book</button>
+    </form> 
 </body>
 </html>
