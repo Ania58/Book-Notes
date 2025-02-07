@@ -38,8 +38,10 @@
                 <% } else { %>
                     <p class="no-cover">No cover available</p>
                 <% } %>
-                <a href="/edit/<%= book.id %>" class="edit-button">✏ Edit</a>
-                <a href="/delete/<%= book.id %>" class="delete-link">🗑 Delete</a>
+                <div class="book-actions">
+                    <a href="/edit/<%= book.id %>" class="edit-button">✏ Edit</a>
+                    <a href="/delete/<%= book.id %>" class="delete-button">🗑 Delete</a>
+                </div>
             </div>
         <% }) %>
     </div>
