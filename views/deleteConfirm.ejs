@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirm Deletion</title>
+    <link rel="stylesheet" href="/deleteBook.css">
+</head>
+<body>
+    <div class="delete-container">
+        <h1>Are you sure you want to delete this book?</h1>
+        <h2><%= book.title %></h2>
+        <h3>by <%= book.author %></h3>
+        <p>⚠️ <b>This action is irreversible.</b></p>
+        <% if (book.cover_image) { %>
+            <img src="<%= book.cover_image %>" alt="Book Cover">
+        <% } %>
+
+        <div class="delete-actions">
+            <form action="/delete/<%= book.id %>" method="POST">
+                <button type="submit" class="delete-button">Yes, Delete</button>
+            </form>
+            <a href="/" class="cancel-button">No, Cancel</a>
+        </div>
+    </div>
+</body>
+</html>
