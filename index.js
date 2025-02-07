@@ -275,11 +275,24 @@ app.post("/edit/:id", async (req,res) => {
     
             res.redirect("/");
     } catch (error) {
-        console.error("Error adding book:", error);
+        console.error("Error editing book:", error);
         res.status(500).json({ error: "Database error" });
     }
 })
 
+app.post("/delete/:id", async (req,res) => {
+    const { id } = req.params;
+    try {
+        const result = await db.query(`DELETE FROM books WHERE id = $1 RETURNING *`, [id]);
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: "Book not found" });
+        }
+        res.redirect("/");
+    } catch (error) {
+        console.error("Error deleting book:", error);
+        res.status(500).json({ error: "Database error" });
+    }
+})
 
 
 
