@@ -142,3 +142,55 @@ a:hover {
     color: #cc0000; 
     transform: scale(1.1); 
 }
+
+@media (max-width: 768px) {
+    .book-container {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .book-card {
+        max-width: 90%;
+    }
+
+    h1 {
+        font-size: 1.8rem;
+    }
+
+    .nav-link {
+        font-size: 16px;
+        padding: 8px 15px;
+    }
+
+    .book-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .edit-button, .delete-button {
+        width: 80%;
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        padding: 10px;
+    }
+
+    h1 {
+        font-size: 1.5rem;
+    }
+
+    .book-card {
+        max-width: 100%;
+    }
+
+    .edit-button, .delete-button {
+        width: 100%;
+    }
+
+    .nav-link {
+        font-size: 14px;
+        padding: 6px 12px;
+    }
+}

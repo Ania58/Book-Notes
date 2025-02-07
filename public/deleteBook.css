@@ -69,3 +69,73 @@ body {
 .delete-actions a:hover {
     background-color: #999;
 }
+
+@media (max-width: 768px) {
+    .delete-container {
+        max-width: 90%;
+        padding: 20px;
+        min-height: 450px; 
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between; 
+        align-items: center; 
+    }
+
+    h1 {
+        font-size: 1.8rem;
+        text-align: center;
+    }
+
+    .delete-container img {
+        display: block;
+        margin: 0 auto; 
+    }
+
+    .delete-actions {
+        display: flex;
+        flex-direction: row; 
+        gap: 10px;
+        justify-content: center;
+        width: 100%;
+    }
+
+    .delete-actions button,
+    .delete-actions a {
+        flex: 1; 
+        padding: 12px 15px;
+        font-size: 1rem;
+        text-align: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .delete-container {
+        max-width: 95%;
+        padding: 15px;
+        min-height: 480px; 
+    }
+
+    h1 {
+        font-size: 1.5rem;
+        text-align: center;
+    }
+
+    .delete-container img {
+        display: block;
+        margin: 0 auto; 
+    }
+
+    .delete-actions {
+        display: flex;
+        flex-direction: row; 
+        gap: 8px;
+        width: 100%;
+    }
+
+    .delete-actions button,
+    .delete-actions a {
+        flex: 1; 
+        font-size: 0.9rem;
+        padding: 10px 12px;
+    }
+}
