@@ -61,11 +61,9 @@ nodemon index.js
 
 The Book Notes page will be available at http://localhost:3000.
 
-```bash 
-🔗 API Endpoints
-Method	Endpoint	    Description
-GET	    /	            Fetch all books
-POST	/add	         Add a new book
-POST	/edit/:id	    Update a book (form-based)
-POST	/delete/:id	    Delete a book (form-based)
-```
+| Method | Endpoint     | Description                  |
+|--------|-------------|------------------------------|
+| **GET**  | `/`         | Fetch all books              |
+| **POST** | `/add`      | Add a new book               |
+| **POST** | `/edit/:id` | Update a book (form-based)  |
+| **POST** | `/delete/:id` | Delete a book (form-based) |
