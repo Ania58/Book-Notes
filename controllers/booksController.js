@@ -178,6 +178,10 @@ const cleanDescription = (description) => {
 const getAllBooks = async (req, res) => {
     try {
         const dbBooks = await db.query("SELECT * FROM books ORDER BY id ASC");
+        
+        if (req.headers["test-mode"] === "true") {
+            return res.status(200).json(dbBooks.rows);
+        }
 
         const existingTitles = dbBooks.rows.map(book => book.title);
         const missingBooks = books.filter(book => !existingTitles.includes(book.title));
@@ -210,10 +214,13 @@ const addBook = async (req, res) => {
         return res.status(400).json({ error: "Title and author are required" });
     }
     try {
-        await db.query(`INSERT INTO books 
+        const result = await db.query(`INSERT INTO books 
             (title, author, publication_year, description, cover_image) 
             VALUES ($1, $2, $3, $4, $5) RETURNING*`, 
             [title, author, publication_year, description || "Description not available", cover_image || "Cover image not available"]); 
+            if (req.headers["test-mode"] === "true") {
+                return res.status(201).json({ message: `✅ Book "${title}" added successfully!`, book: result.rows[0] });
+            }
         res.render("addBook.ejs", { message: `✅ Book "${title}" added successfully!` });
     } catch (error) {
         console.error("Error adding book:", error);
@@ -237,6 +244,14 @@ const editBook = async (req, res) => {
     const { title, author, publication_year, description, cover_image } = req.body;
     const { id } = req.params;
     try {
+        const checkDuplicate = await db.query(
+            "SELECT * FROM books WHERE title = $1 AND author = $2 AND id != $3",
+            [title, author, id]
+        );
+
+        if (checkDuplicate.rows.length > 0) {
+            return res.status(400).json({ error: "Another book with the same title and author already exists." });
+        }
         const result = await db.query(`UPDATE books
             SET title = $1, author = $2, publication_year = $3, description = $4, cover_image = $5
             WHERE id = $6 RETURNING *`,
